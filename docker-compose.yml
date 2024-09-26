@@ -12,14 +12,29 @@ services:
     ports:
       - 3307:3306
   
-  producer:
+  harris-scraper:
     build:
-      context: producer/
+      context: harris-scraper/
       dockerfile: ./Dockerfile
-    image: elections_producer
-    container_name: producer
+    image: elections_producer_1
+    container_name: harris_scraper
     ports:
       - "5001:5001"
+    env_file:
+    - ./.env
+    command: sh -c "sleep 15s ; python3 -u scraper.py"
+    depends_on:
+      mysql:
+        condition: service_started
+
+  trump-scraper:
+    build:
+      context: trump-scraper/
+      dockerfile: ./Dockerfile
+    image: elections_producer_2
+    container_name: trump_scraper
+    ports:
+      - "5002:5002"
     env_file:
     - ./.env
     command: sh -c "sleep 15s ; python3 -u scraper.py"
