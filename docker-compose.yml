@@ -3,14 +3,18 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
+      MYSQL_DATABASE: elections
       MYSQL_ROOT_PASSWORD: root
       MYSQL_USER: user                    
-      MYSQL_PASSWORD: user     
+      MYSQL_PASSWORD: user
     volumes:
       - ./mysql/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mysql/custom-entrypoint.sh:/usr/local/bin/custom-entrypoint.sh
+      - db-data:/var/lib/mysql
     restart: always 
     ports:
       - 3307:3306
+    entrypoint: /usr/local/bin/custom-entrypoint.sh
   
   harris-scraper:
     build:
@@ -41,3 +45,6 @@ services:
     depends_on:
       mysql:
         condition: service_started
+
+volumes:
+  db-data:
