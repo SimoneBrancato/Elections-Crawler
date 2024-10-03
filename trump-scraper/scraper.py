@@ -26,7 +26,8 @@ def setup_driver():
     chrome_options.add_argument("--lang=en")
     chrome_options.add_argument(f'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36')
     chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-
+    chrome_options.add_argument("--force-device-scale-factor=0.75")
+    
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
@@ -84,77 +85,95 @@ cursor = connection.cursor()
 
 def scroll_down():
     driver.execute_script("window.scrollBy(0, 800);")
-    time.sleep(20)
+    time.sleep(15)
 
-# Parses FB timestamp format to datetime format
-def parse_timestamp_to_datetime(timestamp):
-    current_timestamp_format = "%A, %B %d, %Y at %I:%M %p"
-
-    try:
-        dt_object = datetime.strptime(timestamp, current_timestamp_format)
-        mysql_datetime = dt_object.strftime("%Y-%m-%d %H:%M:%S")
-    except Exception:
-        mysql_datetime = "2020-01-01 12:00:00"
-
-    return mysql_datetime
-
+def scroll_to_bottom():
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(45)
 
 action = webdriver.ActionChains(driver) # To extract timestamp from tooltip
 
-# Scrapes the first 100 posts, extracting timestamp and text
-def scrape_posts():
-    posts_txt = set()  # Set to track scraped posts 
-    
-    while len(posts_txt) < 100:
-        
-        time.sleep(30)  # Add a long pause to load the page due to low performances
+# Extracts text from post if it is not been scraped
+def get_text_from_post(post):
+    try:                                        
+        text = post.find_element(By.XPATH, ".//span[@class='x193iq5w xeuugli x13faqbe x1vvkbs x1xmvt09 x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xudqn12 x3x7a5m x6prxxf xvq8zen xo1l8bm xzsf02u x1yc453h']").get_attribute('innerText')
+        query = """
+                SELECT COUNT(*) 
+                FROM Trump 
+                WHERE content LIKE %s
+                """
+        cursor.execute(query, (text,))
+        count = cursor.fetchone()[0]
+    except Exception:
+        count = 0
+        text = "NULL"
 
-        # Search for new posts
+    return text, count
+
+# Ectract timestamp_str from post
+def get_timestamp_str_from_post(post):
+    try:
+        extracted_timestamp = post.find_element(By.XPATH, ".//span[@class='x1rg5ohu x6ikm8r x10wlt62 x16dsc37 xt0b8zv']")
+        action.move_to_element(extracted_timestamp).perform()
+        time.sleep(2)
+
+        timestamp_str = WebDriverWait(post, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='xj5tmjb x1r9drvm x16aqbuh x9rzwcf xjkqk3g xms15q0 x1lliihq xo8ld3r xjpr12u xr9ek0c x86nfjv xz9dl7a xsag5q8 x1ye3gou xn6708d x1n2onr6 x19991ni __fb-dark-mode  x1hc1fzr xhb22t3 xls3em1']"))
+        ).get_attribute('innerText')
+    except Exception:
+        timestamp_str = "NULL"
+
+    return timestamp_str
+
+def scrape_posts():
+    
+    inserted_timestamp = datetime.now()
+
+    while inserted_timestamp > datetime(2024, 1, 1, 0, 0, 0):
+        
         new_posts = WebDriverWait(driver, 30).until(
-            EC.presence_of_all_elements_located((By.XPATH, "//div[@class='x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z']"))
+            EC.visibility_of_all_elements_located((By.XPATH, "//div[@class='x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z']"))
         )
 
         print(f"Retrieved {len(new_posts)} posts.")
 
         for new_post in new_posts:
-            timestamp_str = "NULL"
-            text = "NULL"
+                      
+            text, count = get_text_from_post(new_post)
 
-            try:                                        
-                text = new_post.find_element(By.XPATH, ".//span[@class='x193iq5w xeuugli x13faqbe x1vvkbs x1xmvt09 x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xudqn12 x3x7a5m x6prxxf xvq8zen xo1l8bm xzsf02u x1yc453h']").get_attribute('innerText')
-            except Exception:
-                print("#### SKIPPING CURRENT POST ####")
+            if count > 0:
+                print(f"##### Post già tracciato. Count: {count} #####")
 
-            if text != "NULL" and text not in posts_txt:
-                try:
-                    extracted_timestamp = new_post.find_element(By.XPATH, ".//span[@class='x1rg5ohu x6ikm8r x10wlt62 x16dsc37 xt0b8zv']")
-                    action.move_to_element(extracted_timestamp).perform()
-                    time.sleep(5)
+            if text != "NULL" and count == 0:
 
-                    timestamp_str = WebDriverWait(new_post, 20).until(
-                        EC.presence_of_element_located((By.XPATH, "//div[@class='xj5tmjb x1r9drvm x16aqbuh x9rzwcf xjkqk3g xms15q0 x1lliihq xo8ld3r xjpr12u xr9ek0c x86nfjv xz9dl7a xsag5q8 x1ye3gou xn6708d x1n2onr6 x19991ni __fb-dark-mode  x1hc1fzr xhb22t3 xls3em1']"))
-                    ).get_attribute('innerText')
-
-                except Exception:
-                    pass
+                timestamp_str = get_timestamp_str_from_post(new_post)
 
                 if timestamp_str != "NULL":
-                    timestamp = parse_timestamp_to_datetime(timestamp_str)
-                    posts_txt.add(text)
+                    try:
+                        timestamp = datetime.strptime(timestamp_str, "%A, %B %d, %Y at %I:%M %p")
 
-                    sql_insert_query = """INSERT IGNORE INTO Trump (timestamp,content) VALUES (%s, %s)"""
-                    cursor.execute(sql_insert_query, (timestamp,text))
-                    connection.commit()
-
-                    print("Inserted row into Trump table.")
+                        if timestamp < datetime(2024, 1, 1, 0, 0, 0) and timestamp is not None:
+                            print(f"### {timestamp} ###")
+                        else:            
+                            sql_insert_query = """
+                                                INSERT IGNORE 
+                                                INTO Trump (timestamp, content)
+                                                VALUES (%s, %s)
+                                                """
+                            cursor.execute(sql_insert_query, (timestamp, text))
+                            connection.commit()
+                            print(f"Inserted row into Trump table. Timestamp: {timestamp}")
+                            inserted_timestamp = timestamp         
+  
+                    except ValueError:
+                        print(f"Timestamp '{timestamp_str}' non rispetta il formato richiesto.")
 
         scroll_down()
+        
+    print("##### Scraping finished #####")
+    return 
 
-    return posts_txt
-
-posts = scrape_posts()
-
-print(f"Retrieved {len(posts)} posts.")
+scrape_posts()
 
 # Close the cursor and connection
 cursor.close()
