@@ -13,7 +13,6 @@ import os
 
 def setup_driver():
     chrome_options = Options()
-    
     chrome_options.add_argument("--headless=new")  
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
@@ -87,10 +86,6 @@ def scroll_down():
     driver.execute_script("window.scrollBy(0, 800);")
     time.sleep(15)
 
-def scroll_to_bottom():
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(45)
-
 action = webdriver.ActionChains(driver) # To extract timestamp from tooltip
 
 # Extracts text from post if it is not been scraped
@@ -125,8 +120,9 @@ def get_timestamp_str_from_post(post):
 
     return timestamp_str
 
+# Scrapes posts published in 2024 and sends to Elections DB 
 def scrape_posts():
-    
+
     inserted_timestamp = datetime.now()
 
     while inserted_timestamp > datetime(2024, 1, 1, 0, 0, 0):
@@ -145,7 +141,6 @@ def scrape_posts():
                 print(f"##### Post già tracciato. Count: {count} #####")
 
             if text != "NULL" and count == 0:
-
                 timestamp_str = get_timestamp_str_from_post(new_post)
 
                 if timestamp_str != "NULL":
