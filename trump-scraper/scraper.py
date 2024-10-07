@@ -8,6 +8,10 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import mysql.connector
 from datetime import datetime
+import requests
+from PIL import Image
+from io import BytesIO
+import pytesseract
 import time
 import os
 
@@ -84,14 +88,41 @@ cursor = connection.cursor()
 
 def scroll_down():
     driver.execute_script("window.scrollBy(0, 800);")
-    time.sleep(15)
+    time.sleep(25)
 
 action = webdriver.ActionChains(driver) # To extract timestamp from tooltip
 
+# Download image from an image_url
+def download_image(image_url):
+    response = requests.get(image_url)
+    img = Image.open(BytesIO(response.content))
+    return img
+
+# Step 2: Apply OCR
+def extract_image_text_from_post(post):
+    try:
+        image_url = post.find_element(By.XPATH, ".//div[@class='x10l6tqk x13vifvy']//img").get_attribute('src')
+        img = download_image(image_url)
+        text = pytesseract.image_to_string(img)
+        return " " + text
+    except Exception:
+        return ""
+
+# Extracts caption from text
+def extract_caption_from_post(post):
+    try:
+        caption = post.find_element(By.XPATH, ".//span[@class='x193iq5w xeuugli x13faqbe x1vvkbs x1xmvt09 x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xudqn12 x3x7a5m x6prxxf xvq8zen xo1l8bm xzsf02u x1yc453h']").get_attribute('innerText')
+        return caption
+    except Exception:
+        return ""
+
 # Extracts text from post if it is not been scraped
 def get_text_from_post(post):
-    try:                                        
-        text = post.find_element(By.XPATH, ".//span[@class='x193iq5w xeuugli x13faqbe x1vvkbs x1xmvt09 x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xudqn12 x3x7a5m x6prxxf xvq8zen xo1l8bm xzsf02u x1yc453h']").get_attribute('innerText')
+    try:
+        caption = extract_caption_from_post(post)                                        
+        image_text = extract_image_text_from_post(post)
+        text = caption + image_text
+
         query = """
                 SELECT COUNT(*) 
                 FROM Trump 
@@ -127,18 +158,15 @@ def scrape_posts():
 
     while inserted_timestamp > datetime(2024, 1, 1, 0, 0, 0):
         
-        new_posts = WebDriverWait(driver, 30).until(
+        new_posts = WebDriverWait(driver, 50).until(
             EC.visibility_of_all_elements_located((By.XPATH, "//div[@class='x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z']"))
         )
 
         print(f"Retrieved {len(new_posts)} posts.")
 
         for new_post in new_posts:
-                      
-            text, count = get_text_from_post(new_post)
 
-            if count > 0:
-                print(f"##### Post già tracciato. Count: {count} #####")
+            text, count = get_text_from_post(new_post)
 
             if text != "NULL" and count == 0:
                 timestamp_str = get_timestamp_str_from_post(new_post)
