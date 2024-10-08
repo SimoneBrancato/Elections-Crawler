@@ -129,18 +129,19 @@ def get_text_from_post(post):
         text = caption + image_text                                        
 
         query = """
-                SELECT COUNT(*) 
+                SELECT uuid 
                 FROM Posts 
                 WHERE content LIKE %s
                 AND candidate = 'Harris'
+                LIMIT 1
                 """
         cursor.execute(query, (text,))
-        count = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        uuid = result[0] if result else 0 
     except Exception:
-        count = 0
-        text = "NULL"
-
-    return text, count
+        return None, None
+    
+    return text, uuid
 
 # Ectract timestamp from post
 def get_timestamp_from_post(post):
@@ -155,9 +156,17 @@ def get_timestamp_from_post(post):
         
         timestamp = datetime.strptime(timestamp_str, "%A, %B %d, %Y at %I:%M %p")
     except Exception:
-        timestamp = "NULL"
+        return None
 
     return timestamp
+
+def convert_reaction_count(reaction_count):
+    if 'k' in reaction_count: 
+        return int(float(reaction_count.replace('k', '')) * 1000)
+    elif 'm' in reaction_count:  
+        return int(float(reaction_count.replace('m', '')) * 1000000)
+    else:
+        return int(reaction_count)
 
 # Scrapes posts published in 2024 and sends to Elections DB 
 def scrape_posts():
@@ -174,41 +183,69 @@ def scrape_posts():
 
         for new_post in new_posts:
 
-            text, count = get_text_from_post(new_post)
+            text, post_uuid = get_text_from_post(new_post)
 
-            if text is None or count > 0:
+            if text is None:
                 continue 
 
-            post_uuid = str(uuid.uuid4()) # Generate UUID for current post  
-            timestamp = get_timestamp_from_post(new_post)
+            if post_uuid == 0:
+                timestamp = get_timestamp_from_post(new_post)
 
-            if timestamp is None:
-                continue 
+                if timestamp is None:
+                    continue 
 
-            if timestamp < datetime(2024, 1, 1, 0, 0, 0):
-                print(f"### RETRIEVED VERY OLD POST {timestamp} ###")
-                return
+                if timestamp < datetime(2024, 1, 1, 0, 0, 0):
+                    print(f"### RETRIEVED VERY OLD POST {timestamp} ###")
+                    return
+                
+                post_uuid = str(uuid.uuid4()) # Generate UUID for current post
+                
+                sql_insert_post = """
+                                    INSERT IGNORE 
+                                    INTO Posts (uuid, timestamp, candidate, content)
+                                    VALUES (%s, %s, %s, %s)
+                                    """
+                
+                cursor.execute(sql_insert_post, (post_uuid, timestamp, "Harris", text))
+                connection.commit()
+                                    
+                print(f"Inserted row into Harris table. Timestamp: {timestamp}.")
+                inserted_timestamp = timestamp     
 
-            sql_insert_post = """
-                                INSERT IGNORE 
-                                INTO Posts (uuid, timestamp, candidate, content)
-                                VALUES (%s, %s, %s, %s)
-                                """
-            cursor.execute(sql_insert_post, (post_uuid, timestamp, "Harris", text))
-            connection.commit()
-                                
-            print(f"Inserted row into Harris table. Timestamp: {timestamp}.")
-            inserted_timestamp = timestamp     
+            # UPDATE REACTIONS COUNT
+            reactions_button = new_post.find_element(By.XPATH, ".//div[@class='x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1ypdohk xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x1n2onr6 x87ps6o x1lku1pv x1a2a7pz x1heor9g xnl1qt8 x6ikm8r x10wlt62 x1vjfegm x1lliihq']")
+            reactions_button.click()
+
+            time.sleep(5)
             
+            reactions_tab = driver.find_elements(By.XPATH, ".//div[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg x1vjfegm x3nfvp2 xrbpyxo x1itg65n x16dsc37']")
+            
+            for tab in reactions_tab:
+                reaction_str = tab.get_attribute("aria-label")
+                reaction_type, reaction_count = reaction_str.replace(" ","").lower().split(',')
+
+                if reaction_type == "all":
+                    continue
+                
+                reaction_count_int = convert_reaction_count(reaction_count)
+
+                cursor.execute(f"UPDATE Posts SET `{reaction_type}` = %s WHERE candidate = 'Harris' AND content LIKE %s", (reaction_count_int, f"%{text}%"))
+                connection.commit()
+
+            close_reactions_button = driver.find_element(By.XPATH, ".//div[@class='x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xzolkzo x12go9s9 x1rnf11y xprq8jg x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x78zum5 xl56j7k xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xc9qbxq x14qfxbe x1qhmfi1']")
+            close_reactions_button.click()
+            time.sleep(5)
+
+            # TAKE COMMENTS
             comments_button = new_post.find_element(By.XPATH, ".//div[@class='x1i10hfl x1qjc9v5 xjqpnuy xa49m3k xqeqjp1 x2hbi6w x1ypdohk xdl72j9 x2lah0s xe8uvvx x2lwn1j xeuugli x1hl2dhg xggy1nq x1t137rt x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x3nfvp2 x1q0g3np x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1ja2u2z']")
             comments_button.click()
             time.sleep(5)
 
             post_popup = driver.find_element(By.XPATH, ".//div[@class='xb57i2i x1q594ok x5lxg6s x78zum5 xdt5ytf x6ikm8r x1ja2u2z x1pq812k x1rohswg xfk6m8 x1yqm8si xjx87ck xx8ngbg xwo3gff x1n2onr6 x1oyok0e x1odjw0f x1iyjqo2 xy5w88m']")
+            
+            comments_scraped = 0
 
-            inserted_comments = 0
-
-            while inserted_comments<100:
+            while comments_scraped < 30:
                 scroll_popup(post_popup)
                 new_comments = post_popup.find_elements(By.XPATH, ".//div[@class='x1lliihq xjkvuk6 x1iorvi4']")
 
@@ -226,18 +263,19 @@ def scrape_posts():
                         continue
 
                     comment_uuid = str(uuid.uuid4())
+
                     sql_insert_comment = """
                                         INSERT IGNORE
                                         INTO Comments (uuid, post_id, content)
                                         VALUES(%s, %s, %s)
                                         """
-                                
+                             
                     cursor.execute(sql_insert_comment, (comment_uuid, post_uuid, comment_text))
                     connection.commit()
-                    inserted_comments += 1
+                    comments_scraped += 1
                     time.sleep(1)
-
-            print(f"Retrieved {inserted_comments} comments")
+                    
+            print(f"Retrieved {comments_scraped} comments")
             close_button = driver.find_element(By.XPATH, '//div[@class="x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xzolkzo x12go9s9 x1rnf11y xprq8jg x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x78zum5 xl56j7k xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xc9qbxq x14qfxbe x1qhmfi1"]')
             close_button.click()
         scroll_down()
