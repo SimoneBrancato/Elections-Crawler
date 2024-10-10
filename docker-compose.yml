@@ -26,6 +26,8 @@ services:
       - "5001:5001"
     env_file:
     - ./.env
+    restart: on-failure
+    stop_grace_period: 5m
     command: sh -c "sleep 15s ; python3 -u scraper.py"
     depends_on:
       mysql:
@@ -41,10 +43,19 @@ services:
       - "5002:5002"
     env_file:
     - ./.env
+    restart: on-failure
+    stop_grace_period: 5m
     command: sh -c "sleep 15s ; python3 -u scraper.py"
     depends_on:
       mysql:
         condition: service_started
+
+  restarter:
+      image: docker:cli
+      container_name: restarter
+      volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+      command: ["/bin/sh", "-c", "while true; do sleep 3600; docker restart trump_scraper harris_scraper; done"]
+      restart: unless-stopped
 
 volumes:
   db-data:

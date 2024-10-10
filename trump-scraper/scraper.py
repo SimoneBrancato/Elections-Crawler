@@ -263,9 +263,10 @@ def convert_reaction_count(reaction_count):
 # Scrapes posts published in 2024 and sends to Elections DB 
 def scrape_posts():
     
+    scraped_posts_count = 0
     retrieved_timestamp = datetime.now()
 
-    while retrieved_timestamp > datetime(2024, 1, 1, 0, 0, 0):
+    while scraped_posts_count < 10 and retrieved_timestamp > datetime(2024, 1, 1, 0, 0, 0):
         
         xpath_post_panels = "//div[@class='x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z']"
         new_posts = WebDriverWait(driver, 50).until(
@@ -295,11 +296,12 @@ def scrape_posts():
                                     INTO Posts (uuid, timestamp, candidate, content)
                                     VALUES (%s, %s, %s, %s)
                                     """
-                retrieved_timestamp = timestamp
+                
                 cursor.execute(sql_insert_post, (post_uuid, timestamp, CANDIDATE, text))
                 connection.commit()
                                     
                 print(f"Inserted row into table. Candidate: {CANDIDATE} Timestamp: {timestamp}.")
+                retrieved_timestamp = timestamp
 
                 print("Loading reactions ...")
                 update_post_reactions(new_post, text)
@@ -310,8 +312,11 @@ def scrape_posts():
                 print("Post present in DB. Updating reactions ...")    
                 update_post_reactions(new_post, text)
 
+            scraped_posts_count += 1
+            
         scroll_down()
         
+
     print("##### Scraping finished #####")
     return 
 
