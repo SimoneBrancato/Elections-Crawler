@@ -7,7 +7,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import mysql.connector
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from PIL import Image
 from io import BytesIO
@@ -92,7 +92,7 @@ print("Connected to the database!")
 # Scroll down into page
 def scroll_down():
     driver.execute_script("window.scrollBy(0, 800);")
-    time.sleep(25)
+    time.sleep(30)
 
 # Scroll down into popup element
 def scroll_popup(element):
@@ -265,8 +265,8 @@ def scrape_posts():
     
     scraped_posts_count = 0
     retrieved_timestamp = datetime.now()
-
-    while scraped_posts_count < 10 and retrieved_timestamp > datetime(2024, 1, 1, 0, 0, 0):
+    
+    while scraped_posts_count < 15 and retrieved_timestamp > datetime(2024, 1, 1, 0, 0, 0):
         
         xpath_post_panels = "//div[@class='x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z']"
         new_posts = WebDriverWait(driver, 50).until(
@@ -286,7 +286,7 @@ def scrape_posts():
             if post_uuid == 0:
                 timestamp = get_timestamp_from_post(new_post)
 
-                if timestamp is None:
+                if timestamp is None or (datetime.now() - timestamp) <= timedelta(hours=1):
                     continue 
                 
                 post_uuid = str(uuid.uuid4()) # Generate UUID for current post
@@ -306,7 +306,7 @@ def scrape_posts():
                 print("Loading reactions ...")
                 update_post_reactions(new_post, text)
                 print("Getting comments ...")
-                get_comments_from_post(new_post, post_uuid, max_comments=120)
+                get_comments_from_post(new_post, post_uuid, max_comments=100)
 
             else:
                 print("Post present in DB. Updating reactions ...")    
@@ -322,6 +322,7 @@ def scrape_posts():
 
 scrape_posts()
 
-# Close the cursor and connection
+# Close the driver, cursor and connection
+driver.quit()
 cursor.close()
 connection.close()
