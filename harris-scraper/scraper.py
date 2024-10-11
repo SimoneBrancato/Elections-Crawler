@@ -266,7 +266,7 @@ def scrape_posts():
     scraped_posts_count = 0
     retrieved_timestamp = datetime.now()
 
-    while scraped_posts_count < 15 and retrieved_timestamp > datetime(2024, 1, 1, 0, 0, 0):
+    while scraped_posts_count < 20 and retrieved_timestamp > datetime(2024, 1, 1, 0, 0, 0):
         
         xpath_post_panels = "//div[@class='x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z']"
         new_posts = WebDriverWait(driver, 50).until(
