@@ -306,7 +306,7 @@ def scrape_posts():
                 print("Loading reactions ...")
                 update_post_reactions(new_post, text)
                 print("Getting comments ...")
-                get_comments_from_post(new_post, post_uuid, max_comments=100)
+                get_comments_from_post(new_post, post_uuid, max_comments=130)
 
             else:
                 print("Post present in DB. Updating reactions ...")    
