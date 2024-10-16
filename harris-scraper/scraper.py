@@ -42,10 +42,13 @@ action = webdriver.ActionChains(driver)
 
 # Accepts all cookies pop-up
 def handle_cookie():
-    xpath_accept_cookies = '//div[@aria-label="Allow all cookies" and @class="x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n x1ypdohk xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3"]'
-    accept_cookies_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH , xpath_accept_cookies)))
-    accept_cookies_button.click()
-    print("Allowed all cookies on Facebook")
+    try:
+        xpath_accept_cookies = '//div[@aria-label="Allow all cookies" and @class="x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n x1ypdohk xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3"]'
+        accept_cookies_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH , xpath_accept_cookies)))
+        accept_cookies_button.click()
+        print("Allowed all cookies on Facebook")
+    except Exception:
+        pass
 
 handle_cookie()
 
@@ -97,7 +100,7 @@ def scroll_down():
 # Scroll down into popup element
 def scroll_popup(element):
     driver.execute_script("arguments[0].scrollBy(0, 800);", element)
-    time.sleep(10)
+    time.sleep(15)
 
 # Extracts text from image
 def extract_image_text_from_post(post):
@@ -107,7 +110,7 @@ def extract_image_text_from_post(post):
         response = requests.get(image_url)
         img = Image.open(BytesIO(response.content))
         text = pytesseract.image_to_string(img)
-        return " " + text
+        return text
     except Exception:
         return ""
 
@@ -125,7 +128,7 @@ def get_text_from_post(post):
     try:
         caption = extract_caption_from_post(post)                                        
         image_text = extract_image_text_from_post(post)
-        text = caption + image_text
+        text = f"{caption} {image_text}" if caption and image_text else caption or image_text
         return text
     except Exception:
         return None
@@ -163,6 +166,51 @@ def get_timestamp_from_post(post):
     except Exception:
         return None
 
+def get_comment_reactions(comment_div):
+    try:
+        reactions = {}
+
+        xpath_reactions_button = ".//div[@class='x1i10hfl x1qjc9v5 xjbqb8w xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x3nfvp2 x1q0g3np x87ps6o x1lku1pv x1a2a7pz' and contains(@aria-label, 'reactions')]"
+        reactions_button = comment_div.find_element(By.XPATH, xpath_reactions_button)
+        reactions_button.click()
+
+        time.sleep(5) 
+
+        xpath_reactions_popup = "//div[@class='x1n2onr6 x1ja2u2z x1afcbsf xdt5ytf x1a2a7pz x71s49j x1qjc9v5 xrjkcco x58fqnu x1mh14rs xfkwgsy x78zum5 x1plvlek xryxfnj xcatxm7 x1n7qst7 xh8yej3']"
+        reactions_popup = driver.find_element(By.XPATH, xpath_reactions_popup) # non lo trova
+
+        xpath_reaction_panels = ".//div[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg x1vjfegm x3nfvp2 xrbpyxo x1itg65n x16dsc37']"
+        reaction_panels = reactions_popup.find_elements(By.XPATH, xpath_reaction_panels)
+
+        for panel in reaction_panels:
+            reaction_str = panel.get_attribute("aria-label")
+            reaction_type, reaction_count = reaction_str.replace(" ","").lower().split(',')
+
+            if reaction_type == "all":
+                continue
+
+            reactions[reaction_type] = convert_reaction_count(reaction_count)
+
+        xpath_close_reactions_button = ".//div[@class='x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xzolkzo x12go9s9 x1rnf11y xprq8jg x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x78zum5 xl56j7k xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xc9qbxq x14qfxbe x1qhmfi1']"
+        close_reactions_button = reactions_popup.find_element(By.XPATH, xpath_close_reactions_button)
+        close_reactions_button.click()  
+        time.sleep(5)
+        return reactions
+    
+    except Exception:
+    
+        reactions = {
+            "like": 0,
+            "love": 0,
+            "care": 0,
+            "haha": 0,
+            "wow": 0,
+            "angry": 0,
+            "sad": 0
+        }
+
+        return reactions
+    
 # Extract comments from post
 def get_comments_from_post(post, post_uuid, max_comments):
     try:
@@ -178,50 +226,72 @@ def get_comments_from_post(post, post_uuid, max_comments):
 
         while comments_count < max_comments:
             scroll_popup(post_popup)
-            xpath_comments = ".//div[@class='x1lliihq xjkvuk6 x1iorvi4']"
+
+            xpath_comments = ".//div[@class='x1n2onr6 x1swvt13 x1iorvi4 x78zum5 x1q0g3np x1a2a7pz']"
             new_comments = post_popup.find_elements(By.XPATH, xpath_comments)
 
             for new_comment in new_comments:
-                comment_text = new_comment.text
-                query = """
-                        SELECT COUNT(*) 
-                        FROM Comments 
-                        WHERE content LIKE %s
-                        """
-                cursor.execute(query, (comment_text,))
-                count = cursor.fetchone()[0]
+                try:
+                    comment_text = new_comment.find_element(By.XPATH, ".//div[@class='x1lliihq xjkvuk6 x1iorvi4']").text
+                    
+                    if len(comment_text) > 1000:
+                        comment_text = comment_text[:999]
 
-                if count > 0:
-                    continue
+                    query = """
+                            SELECT COUNT(*) 
+                            FROM Comments 
+                            WHERE content LIKE %s
+                            """
+                    cursor.execute(query, (comment_text,))
+                    count = cursor.fetchone()[0]
 
-                comment_uuid = str(uuid.uuid4())
-                
-                sql_insert_comment = """
-                                    INSERT IGNORE
-                                    INTO Comments (uuid, post_id, content)
-                                    VALUES(%s, %s, %s)
+                    if count > 0:
+                        continue
+
+                    comment_uuid = str(uuid.uuid4())
+                    
+                    reactions = get_comment_reactions(new_comment)
+
+                    sql_insert_comment = """
+                                    INSERT INTO Comments (uuid, post_id, content, `like`, love, care, haha, wow, angry, sad)
+                                    VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                                     """
-                        
-                cursor.execute(sql_insert_comment, (comment_uuid, post_uuid, comment_text))
-                connection.commit()
-                comments_count += 1
-                time.sleep(1)
+                    
+                    cursor.execute(sql_insert_comment, (
+                        comment_uuid, 
+                        post_uuid, 
+                        comment_text,
+                        reactions.get("like", 0),
+                        reactions.get("love", 0),
+                        reactions.get("care", 0),
+                        reactions.get("haha", 0),
+                        reactions.get("wow", 0),        
+                        reactions.get("angry", 0),
+                        reactions.get("sad", 0)
+                    ))
+
+                    connection.commit()
+                    comments_count += 1
+                    time.sleep(1)
+                except Exception:
+                    continue
     except Exception:
         return
-            
+
     print(f"Retrieved {comments_count} comments")
     xpath_close_comments_button = "//div[@class='x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xzolkzo x12go9s9 x1rnf11y xprq8jg x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x78zum5 xl56j7k xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xc9qbxq x14qfxbe x1qhmfi1']"
     close_button = driver.find_element(By.XPATH, xpath_close_comments_button)
     close_button.click()
 
 # Extracts reactions from post
-def update_post_reactions(post, text):
+def get_post_reactions(post_div):
     try:
+        reactions = {}
         xpath_reactions_button = ".//div[@class='x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1ypdohk xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x1n2onr6 x87ps6o x1lku1pv x1a2a7pz x1heor9g xnl1qt8 x6ikm8r x10wlt62 x1vjfegm x1lliihq']"
-        reactions_button = post.find_element(By.XPATH, xpath_reactions_button)
+        reactions_button = post_div.find_element(By.XPATH, xpath_reactions_button)
         reactions_button.click()
 
-        time.sleep(3)
+        time.sleep(5)
         
         xpath_reaction_panels = ".//div[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg x1vjfegm x3nfvp2 xrbpyxo x1itg65n x16dsc37']"
         reaction_panels = driver.find_elements(By.XPATH, xpath_reaction_panels)
@@ -233,23 +303,26 @@ def update_post_reactions(post, text):
             if reaction_type == "all":
                 continue
             
-            reaction_count_int = convert_reaction_count(reaction_count)
-
-            query_update_reactions = f"""
-                                    UPDATE Posts
-                                    SET `{reaction_type}` = %s 
-                                    WHERE candidate = %s 
-                                    AND content LIKE %s
-                                    """
-            cursor.execute(query_update_reactions, (reaction_count_int, CANDIDATE , f"%{text}%"))
-            connection.commit()
+            reactions[reaction_type] = convert_reaction_count(reaction_count)
 
         xpath_close_reactions_button = ".//div[@class='x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xzolkzo x12go9s9 x1rnf11y xprq8jg x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x78zum5 xl56j7k xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xc9qbxq x14qfxbe x1qhmfi1']"
         close_reactions_button = driver.find_element(By.XPATH, xpath_close_reactions_button)
         close_reactions_button.click()
         time.sleep(5)
+        return reactions
+    
     except Exception:
-        return
+        reactions = {
+            "like": 0,
+            "love": 0,
+            "care": 0,
+            "haha": 0,
+            "wow": 0,
+            "angry": 0,
+            "sad": 0
+        }
+
+        return reactions
 
 # Convert reaction count from string format to integer
 def convert_reaction_count(reaction_count):
@@ -265,7 +338,7 @@ def scrape_posts():
     
     scraped_posts_count = 0
     retrieved_timestamp = datetime.now()
-
+    
     while scraped_posts_count < 20 and retrieved_timestamp > datetime(2024, 1, 1, 0, 0, 0):
         
         xpath_post_panels = "//div[@class='x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z']"
@@ -281,43 +354,53 @@ def scrape_posts():
             if text is None:
                 continue 
 
-            post_uuid = search_post_into_database(text)
+            if len(text) > 1000:
+                text = text[:999]
 
-            if post_uuid == 0:
-                timestamp = get_timestamp_from_post(new_post)
+            if search_post_into_database(text) != 0:
+                continue
 
-                if timestamp is None or (datetime.now() - timestamp) <= timedelta(hours=1):
-                    continue 
-                
-                post_uuid = str(uuid.uuid4()) # Generate UUID for current post
-                
-                sql_insert_post = """
-                                    INSERT IGNORE 
-                                    INTO Posts (uuid, timestamp, candidate, content)
-                                    VALUES (%s, %s, %s, %s)
-                                    """
-                cursor.execute(sql_insert_post, (post_uuid, timestamp, CANDIDATE, text))
-                connection.commit()
-                                    
-                print(f"Inserted row into table. Candidate: {CANDIDATE} Timestamp: {timestamp}.")
-                retrieved_timestamp = timestamp
+            timestamp = get_timestamp_from_post(new_post)
 
-                print("Loading reactions ...")
-                update_post_reactions(new_post, text)
-                print("Getting comments ...")
-                get_comments_from_post(new_post, post_uuid, max_comments=130)
+            if timestamp is None or (datetime.now() - timestamp) <= timedelta(hours=1):
+                continue 
+            
+            post_uuid = str(uuid.uuid4()) # Generate UUID for current post
+            
+            reactions = get_post_reactions(new_post)
 
-            else:
-                print("Post present in DB. Updating reactions ...")    
-                update_post_reactions(new_post, text)
+            sql_insert_post = """
+                                INSERT IGNORE 
+                                INTO Posts (uuid, timestamp, candidate, content, `like`, love, care, haha, wow, angry, sad)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                """
+            
+            cursor.execute(sql_insert_post, (
+                post_uuid, timestamp, CANDIDATE, text,
+                reactions.get("like", 0),
+                reactions.get("love", 0),
+                reactions.get("care", 0),
+                reactions.get("haha", 0),
+                reactions.get("wow", 0),
+                reactions.get("angry", 0),
+                reactions.get("sad", 0)
+            ))
+
+            connection.commit()
+                                
+            print(f"Inserted row into table. Candidate: {CANDIDATE} Timestamp: {timestamp}.")
+            retrieved_timestamp = timestamp
+        
+            print("Getting comments ...")
+            get_comments_from_post(new_post, post_uuid, max_comments=100)
 
             scraped_posts_count += 1
             
         scroll_down()
         
 
-
     print("##### Scraping finished #####")
+    print("##### " + str(retrieved_timestamp) + " #####")
     return 
 
 scrape_posts()
