@@ -59,18 +59,21 @@ CANDIDATE: str = "DonaldTrump"
 
 # Targets email and password forms, fills them with email and password, targets submit button and clicks it
 def handle_login():
-    email = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='email']")))
-    password = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='pass']")))
-    
-    email.clear()
-    email.send_keys(FB_EMAIL)
-    password.clear()
-    password.send_keys(FB_PASSWORD)
-    time.sleep(1)
+    try:
+        email = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='email']")))
+        password = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='pass']")))
+        
+        email.clear()
+        email.send_keys(FB_EMAIL)
+        password.clear()
+        password.send_keys(FB_PASSWORD)
+        time.sleep(1)
 
-    submit_button = WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']")))
-    submit_button.click()
-    print("Login completed successfully")
+        submit_button = WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']")))
+        submit_button.click()
+        print("Login completed successfully")
+    except Exception:
+        return
     
 handle_login()
 
@@ -340,11 +343,9 @@ def scrape_posts():
     
     while scraped_posts_count < 20 and retrieved_timestamp > datetime(2024, 1, 1, 0, 0, 0):
         
+        handle_login()
         xpath_post_panels = "//div[@class='x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z']"
-        new_posts = WebDriverWait(driver, 50).until(
-            EC.visibility_of_all_elements_located((By.XPATH, xpath_post_panels))
-        )
-
+        new_posts = driver.find_elements(By.XPATH, xpath_post_panels)
         print(f"Retrieved {len(new_posts)} posts.")
 
         for new_post in new_posts:
