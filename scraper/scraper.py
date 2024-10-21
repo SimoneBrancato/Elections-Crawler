@@ -12,12 +12,12 @@ import requests
 from PIL import Image
 from io import BytesIO
 import pytesseract
-import time
 import uuid
+import time
 import os
 
 def setup_driver():
-    chrome_options = Options()
+    chrome_options = Options()  
     chrome_options.add_argument("--headless=new")  
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
@@ -31,7 +31,7 @@ def setup_driver():
     chrome_options.add_argument(f'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36')
     chrome_options.add_argument('--disable-blink-features=AutomationControlled')
     chrome_options.add_argument("--force-device-scale-factor=0.75")
-    
+
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
@@ -52,10 +52,9 @@ def handle_cookie():
 
 handle_cookie()
 
-load_dotenv('.env')
-FB_EMAIL: str = os.getenv('FB_EMAIL_TRUMP')
-FB_PASSWORD: str = os.getenv('FB_PASSWORD_TRUMP')
-CANDIDATE: str = "DonaldTrump"
+FB_EMAIL: str = os.getenv('FB_EMAIL')
+FB_PASSWORD: str = os.getenv('FB_PASSWORD')
+CANDIDATE: str = os.getenv('CANDIDATE')
 
 # Targets email and password forms, fills them with email and password, targets submit button and clicks it
 def handle_login():
@@ -199,8 +198,9 @@ def get_comment_reactions(comment_div):
         close_reactions_button.click()  
         time.sleep(5)
         return reactions
+    
     except Exception:
-        
+    
         reactions = {
             "like": 0,
             "love": 0,
@@ -364,13 +364,13 @@ def scrape_posts():
 
             timestamp = get_timestamp_from_post(new_post)
 
-            if timestamp is None or (datetime.now() - timestamp) <= timedelta(hours=1):
+            if timestamp is None or (datetime.now() - timestamp) <= timedelta(hours=3):
                 continue 
-
+        
             if timestamp < datetime(2024, 1, 1, 0, 0, 0):
                 print("##### Retrieved very old post: " + str(retrieved_timestamp) + " #####")
                 return
-
+            
             post_uuid = str(uuid.uuid4()) # Generate UUID for current post
             
             reactions = get_post_reactions(new_post)
@@ -403,7 +403,7 @@ def scrape_posts():
             scraped_posts_count += 1
             
         scroll_down()
-    
+        
     print("##### Scraping finished #####")
     
     return 

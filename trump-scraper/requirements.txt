@@ -1,7 +1,0 @@
-mysql-connector-python
-selenium
-webdriver_manager
-python-dotenv
-pillow
-pytesseract
-requests

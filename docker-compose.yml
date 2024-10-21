@@ -18,14 +18,16 @@ services:
   
   harris-scraper:
     build:
-      context: harris-scraper/
+      context: scraper/
       dockerfile: ./Dockerfile
     image: elections_producer_1
     container_name: harris_scraper
     ports:
       - "5001:5001"
-    env_file:
-    - ./.env
+    environment:
+      - CANDIDATE=KamalaHarris
+      - FB_EMAIL=${FB_EMAIL_HARRIS}
+      - FB_PASSWORD=${FB_PASSWORD_HARRIS}
     command: sh -c "sleep 15s ; python3 -u scraper.py"
     restart: unless-stopped
     depends_on:
@@ -34,14 +36,16 @@ services:
 
   trump-scraper:
     build:
-      context: trump-scraper/
+      context: scraper/
       dockerfile: ./Dockerfile
     image: elections_producer_2
     container_name: trump_scraper
     ports:
       - "5002:5002"
-    env_file:
-    - ./.env
+    environment:
+      - CANDIDATE=DonaldTrump
+      - FB_EMAIL=${FB_EMAIL_TRUMP}
+      - FB_PASSWORD=${FB_PASSWORD_TRUMP}
     command: sh -c "sleep 15s ; python3 -u scraper.py"
     restart: unless-stopped
     depends_on:
