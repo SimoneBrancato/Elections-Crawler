@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS Posts (
 CREATE TABLE IF NOT EXISTS Comments (
     uuid CHAR(36) PRIMARY KEY,
     post_id CHAR(36),
+    account CHAR(36),
     content VARCHAR(1000) NOT NULL,
     `like` INT DEFAULT 0,
     love INT DEFAULT 0,
