@@ -157,8 +157,8 @@ def get_timestamp_from_post(post):
         extracted_timestamp = post.find_element(By.XPATH, xpath_timestamp)
         action.move_to_element(extracted_timestamp).perform()
         time.sleep(2)
-
-        xpath_timestamp_tooltip = "//div[@class='xj5tmjb x1r9drvm x16aqbuh x9rzwcf xjkqk3g xms15q0 x1lliihq xo8ld3r xjpr12u xr9ek0c x86nfjv xz9dl7a xsag5q8 x1ye3gou xn6708d x1n2onr6 x19991ni __fb-dark-mode  x1hc1fzr xhb22t3 xls3em1']"
+                                                
+        xpath_timestamp_tooltip = "//div[@class='xj5tmjb x1r9drvm x16aqbuh x9rzwcf xjkqk3g x972fbf xcfux6l x1qhh985 xm0m39n xms15q0 x1lliihq xo8ld3r x86nfjv xz9dl7a xsag5q8 x1ye3gou xn6708d x1n2onr6 x19991ni __fb-dark-mode  x1hc1fzr xhb22t3 xls3em1']"
         timestamp_str = WebDriverWait(post, 20).until(
             EC.presence_of_element_located((By.XPATH, xpath_timestamp_tooltip))
         ).get_attribute('innerText')
@@ -354,23 +354,27 @@ def scrape_posts():
             text = get_text_from_post(new_post)
             
             if text is None:
+                print("Text is none")
                 continue 
 
             if len(text) > 1000:
                 text = text[:999]
 
             if search_post_into_database(text) != 0:
+                print("Post is into db")
                 continue
 
             timestamp = get_timestamp_from_post(new_post)
 
             if timestamp is None or (datetime.now() - timestamp) <= timedelta(hours=3):
+                print("Timestamp is none or less than 3 hours ago")
                 continue 
         
             if timestamp < datetime(2024, 1, 1, 0, 0, 0):
                 print("##### Retrieved very old post: " + str(retrieved_timestamp) + " #####")
                 return
             
+            print("Generating UUID")
             post_uuid = str(uuid.uuid4()) # Generate UUID for current post
             
             reactions = get_post_reactions(new_post)
