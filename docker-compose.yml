@@ -16,48 +16,113 @@ services:
       - 3307:3306
     entrypoint: /usr/local/bin/custom-entrypoint.sh
   
-  harris-scraper:
+  harris-links-retriever:
     build:
-      context: scraper/
+      context: links_retriever/
       dockerfile: ./Dockerfile
-    image: elections_producer_1
-    container_name: harris_scraper
-    ports:
-      - "5001:5001"
+    image: elections_retriever_1
+    container_name: harris_retriever
     environment:
       - CANDIDATE=KamalaHarris
-      - FB_EMAIL=${FB_EMAIL_HARRIS}
-      - FB_PASSWORD=${FB_PASSWORD_HARRIS}
-    command: sh -c "sleep 15s ; python3 -u scraper.py"
-    restart: unless-stopped
+      - FB_EMAIL=${FB_EMAIL_RETRIEVER}
+      - FB_PASSWORD=${FB_PASSWORD_RETRIEVER}
+    command: sh -c "sleep 60s ; python3 -u links_loader.py"
     depends_on:
-      mysql:
-        condition: service_started
+      - mysql
 
-  trump-scraper:
+  trump-links-retriever:
     build:
-      context: scraper/
+      context: links_retriever/
       dockerfile: ./Dockerfile
-    image: elections_producer_2
-    container_name: trump_scraper
-    ports:
-      - "5002:5002"
+    image: elections_retriever_2
+    container_name: trump_retriever
     environment:
       - CANDIDATE=DonaldTrump
-      - FB_EMAIL=${FB_EMAIL_TRUMP}
-      - FB_PASSWORD=${FB_PASSWORD_TRUMP}
-    command: sh -c "sleep 15s ; python3 -u scraper.py"
-    restart: unless-stopped
+      - FB_EMAIL=${FB_EMAIL_RETRIEVER}
+      - FB_PASSWORD=${FB_PASSWORD_RETRIEVER}
+    command: sh -c "sleep 360s ; python3 -u links_loader.py"
     depends_on:
-      mysql:
-        condition: service_started
+      - mysql
 
-  restarter:
-      image: docker:cli
-      container_name: restarter
-      volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
-      command: ["/bin/sh", "-c", "while true; do sleep 3000; docker stop trump_scraper harris_scraper; sleep 600; docker start trump_scraper harris_scraper; done"]
-      restart: unless-stopped
+  restart-analyzers:
+    image: docker:cli
+    container_name: restarter_analyzer
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+    command: ["/bin/sh", "-c", "while true; do sleep 86400; docker restart harris_analyzer; sleep 300; docker restart trump_analyzer; done"]
+    
+  restart-links-retriever:
+    image: docker:cli
+    container_name: restarter_retriever
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+    command: ["/bin/sh", "-c", "while true; do sleep 43200; docker restart harris_retriever; sleep 300; docker restart trump_retriever; done"]
+    
+  harris-analyzer-1:
+    build:
+      context: analyzer/
+      dockerfile: ./Dockerfile
+    image: elections_analyzer_1
+    container_name: harris_analyzer_1
+    environment:
+      - FB_EMAIL=${FB_EMAIL_HARRIS_1}
+      - FB_PASSWORD=${FB_PASSWORD_HARRIS_1}
+      - CANDIDATE=KamalaHarris
+      - FIRST_DELAY=0
+      - SECOND_DELAY=1
+      - MAX_COMMENTS=100
+    command: sh -c "sleep 300s ; python3 -u analyzer.py"
+    depends_on:
+      - mysql
 
+  harris-analyzer-2:
+    build:
+      context: analyzer/
+      dockerfile: ./Dockerfile
+    image: elections_analyzer_2
+    container_name: harris_analyzer_2
+    environment:
+      - FB_EMAIL=${FB_EMAIL_HARRIS_2}
+      - FB_PASSWORD=${FB_PASSWORD_HARRIS_2}
+      - CANDIDATE=KamalaHarris
+      - FIRST_DELAY=2
+      - SECOND_DELAY=3
+      - MAX_COMMENTS=100
+    command: sh -c "sleep 300s ; python3 -u analyzer.py"
+    depends_on:
+      - mysql
+
+  trump-analyzer-1:
+    build:
+      context: analyzer/
+      dockerfile: ./Dockerfile
+    image: elections_analyzer_3
+    container_name: trump_analyzer_1
+    environment:
+      - FB_EMAIL=${FB_EMAIL_TRUMP_1}
+      - FB_PASSWORD=${FB_PASSWORD_TRUMP_1}
+      - CANDIDATE=DonaldTrump
+      - FIRST_DELAY=0
+      - SECOND_DELAY=1
+      - MAX_COMMENTS=100
+    command: sh -c "sleep 600s ; python3 -u analyzer.py"
+    depends_on:
+      - mysql
+
+  trump-analyzer-2:
+    build:
+      context: analyzer/
+      dockerfile: ./Dockerfile
+    image: elections_analyzer_4
+    container_name: trump_analyzer_2
+    environment:
+      - FB_EMAIL=${FB_EMAIL_TRUMP_2}
+      - FB_PASSWORD=${FB_PASSWORD_TRUMP_2}
+      - CANDIDATE=DonaldTrump
+      - FIRST_DELAY=2
+      - SECOND_DELAY=3
+      - MAX_COMMENTS=100
+    command: sh -c "sleep 600s ; python3 -u analyzer.py"
+    depends_on:
+      - mysql
+      
 volumes:
   db-data:

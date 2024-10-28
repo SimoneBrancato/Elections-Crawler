@@ -1,0 +1,7 @@
+mysql-connector-python
+selenium
+webdriver_manager
+requests
+pillow
+pytesseract
+pandas
