@@ -139,7 +139,7 @@ def retrieve_links():
                 if post_link in links:
                     continue
                 
-                if "post" not in post_link:
+                if "/posts/" not in post_link:
                     continue
 
                 idx = post_link.find('?')

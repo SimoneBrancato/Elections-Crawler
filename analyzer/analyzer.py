@@ -46,7 +46,7 @@ MAX_COMMENTS: int = int(os.getenv('MAX_COMMENTS'))
 LOGGER.setLevel(logging.ERROR)
 
 # Targets email and password forms, fills them with email and password, targets submit button and clicks it
-def handle_login(driver):
+def handle_login(driver: WebDriver):
     try:
         
         xpath_email_form = "//input[@name='email' and @class='x1i10hfl xggy1nq x1s07b3s x1kdt53j x1a2a7pz xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x9f619 xzsf02u x1uxerd5 x1fcty0u x132q4wb x1a8lsjc x1pi30zi x1swvt13 x9desvi xh8yej3 x15h3p50 x10emqs4']"
@@ -62,12 +62,13 @@ def handle_login(driver):
 
         time.sleep(3)
 
-        driver.save_screenshot('/screen/img.png')
+        
         xpath_submit_button = "//div[@class='x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n x1ypdohk xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3']"
         submit_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, xpath_submit_button)))
         submit_button.click()
         print("Login completed successfully.")
     except Exception:
+        print("WARNING: Login handler not successfull.")
         pass
     
 
@@ -79,6 +80,7 @@ def handle_cookie(driver):
         accept_cookies_button.click()
         print("Allowed all cookies.")
     except Exception:
+        print("WARNING: Cookie handler not successfull.")
         pass
 
 # Establish connection with Elections database
@@ -238,7 +240,7 @@ def get_timestamp_from_comment(comment, action):
         return None
 
 # Extract comments from post
-def get_comments_from_post(post, post_id, driver, action, max_comments):
+def get_comments_from_post(post, post_id, driver, action, max_comments) -> bool:
     try:
         print("Getting comments...")   
 
@@ -275,8 +277,6 @@ def get_comments_from_post(post, post_id, driver, action, max_comments):
                     if timestamp is None:
                         continue
 
-                    # print(f"ID: {comment_id} | Timestamp: {timestamp} | Account: {account_name}")
-
                     retrieving_time = datetime.now()
 
                     if len(comment_text) > 1000:
@@ -301,7 +301,6 @@ def get_comments_from_post(post, post_id, driver, action, max_comments):
                         reactions.get("sad", 0)
                     ))
 
-                    connection.commit()
                     time.sleep(1)
 
                 except Exception:
@@ -309,13 +308,17 @@ def get_comments_from_post(post, post_id, driver, action, max_comments):
 
         print(f"Retrieved {len(comments_set)} comments.")
 
-        if len(comments_set) < max_comments-20:
+        if len(comments_set) < max_comments-30:
             print("### THROTTLING DETECTED | Restarting scraping in 60 minutes ###")
             driver.quit()
             time.sleep(3600)
+            return False
 
+        connection.commit()
+        return True
+    
     except Exception:
-        return
+        return False
 
 # Extracts reactions from post
 def get_post_reactions(post_div, driver):
@@ -374,7 +377,7 @@ def extract_post_id(fb_url):
     return post_id
 
 # Entirely scrapes a post by url. Assumes that the driver is already in the page
-def scrape_post(url, driver, action):
+def scrape_post(url, driver, action) -> bool:
     try:
         time.sleep(15)
         handle_cookie(driver)
@@ -424,8 +427,9 @@ def scrape_post(url, driver, action):
         connection.commit()
                             
         print(f"Inserted post. Retrieving time: {retrieving_time} | Post timestamp: {timestamp} | Candidate: {CANDIDATE}")
-        get_comments_from_post(post_popup, post_id, driver, action, max_comments=MAX_COMMENTS)
-
+        is_successful = get_comments_from_post(post_popup, post_id, driver, action, max_comments=MAX_COMMENTS)
+        return is_successful
+    
     except Exception:
         return
 
@@ -437,17 +441,27 @@ def scrape_posts_by_link_list(posts_result):
     action = webdriver.ActionChains(driver)
 
     for link in post_links:
-        try:
-            driver.get(link)
-        except Exception:
-            driver = setup_driver()
-            driver.maximize_window()
-            action = webdriver.ActionChains(driver)
-            driver.get(link)
-            print("Driver set up")
-        finally:
-            scrape_post(link, driver, action)
-    
+
+        if "/posts/" not in link:
+            continue
+
+        successful_scrape = False
+
+        while not successful_scrape:
+            try:
+                driver.get(link)
+            except Exception:
+                driver = setup_driver()
+                driver.maximize_window()
+                action = webdriver.ActionChains(driver)
+                driver.get(link)
+                print("Driver set up")
+            finally:
+                successful_scrape = scrape_post(link, driver, action)
+
+                if successful_scrape is False:
+                    print(f"Retrying current link due to scrape failure.")
+
     driver.quit()
 
 """ 
