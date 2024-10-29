@@ -68,7 +68,6 @@ def handle_login(driver: WebDriver):
         submit_button.click()
         print("Login completed successfully.")
     except Exception:
-        print("WARNING: Login handler not successfull.")
         pass
     
 
@@ -80,7 +79,6 @@ def handle_cookie(driver):
         accept_cookies_button.click()
         print("Allowed all cookies.")
     except Exception:
-        print("WARNING: Cookie handler not successfull.")
         pass
 
 # Establish connection with Elections database
