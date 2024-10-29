@@ -48,7 +48,7 @@ services:
     image: docker:cli
     container_name: restarter_analyzer
     volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
-    command: ["/bin/sh", "-c", "while true; do sleep 86400; docker restart harris_analyzer; sleep 300; docker restart trump_analyzer; done"]
+    command: ["/bin/sh", "-c", "while true; do sleep 86400; docker restart harris_analyzer_1 harris_analyzer_2; sleep 300; docker restart trump_analyzer_1 trump_analyzer_2; done"]
     
   restart-links-retriever:
     image: docker:cli
