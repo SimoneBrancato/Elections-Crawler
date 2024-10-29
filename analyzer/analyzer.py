@@ -306,9 +306,10 @@ def get_comments_from_post(post, post_id, driver, action, max_comments) -> bool:
 
         print(f"Retrieved {len(comments_set)} comments.")
 
-        if len(comments_set) < max_comments-30:
+        if len(comments_set) < max_comments/2:
             print("### THROTTLING DETECTED | Restarting scraping in 60 minutes ###")
             driver.quit()
+            connection.rollback()
             time.sleep(3600)
             return False
 
