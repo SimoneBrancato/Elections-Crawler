@@ -67,7 +67,7 @@ services:
       - FB_PASSWORD=${FB_PASSWORD_HARRIS_1}
       - CANDIDATE=KamalaHarris
       - FIRST_DELAY=0
-      - SECOND_DELAY=1
+      - SECOND_DELAY=5
       - MAX_COMMENTS=80
     command: sh -c "sleep 300s ; python3 -u analyzer.py"
     depends_on:
@@ -83,8 +83,8 @@ services:
       - FB_EMAIL=${FB_EMAIL_HARRIS_2}
       - FB_PASSWORD=${FB_PASSWORD_HARRIS_2}
       - CANDIDATE=KamalaHarris
-      - FIRST_DELAY=2
-      - SECOND_DELAY=3
+      - FIRST_DELAY=10
+      - SECOND_DELAY=15
       - MAX_COMMENTS=80
     command: sh -c "sleep 300s ; python3 -u analyzer.py"
     depends_on:
@@ -101,7 +101,7 @@ services:
       - FB_PASSWORD=${FB_PASSWORD_TRUMP_1}
       - CANDIDATE=DonaldTrump
       - FIRST_DELAY=0
-      - SECOND_DELAY=1
+      - SECOND_DELAY=5
       - MAX_COMMENTS=80
     command: sh -c "sleep 600s ; python3 -u analyzer.py"
     depends_on:
@@ -117,8 +117,8 @@ services:
       - FB_EMAIL=${FB_EMAIL_TRUMP_2}
       - FB_PASSWORD=${FB_PASSWORD_TRUMP_2}
       - CANDIDATE=DonaldTrump
-      - FIRST_DELAY=2
-      - SECOND_DELAY=3
+      - FIRST_DELAY=10
+      - SECOND_DELAY=15
       - MAX_COMMENTS=80
     command: sh -c "sleep 600s ; python3 -u analyzer.py"
     depends_on:

@@ -307,10 +307,10 @@ def get_comments_from_post(post, post_id, driver, action, max_comments) -> bool:
         print(f"Retrieved {len(comments_set)} comments.")
 
         if len(comments_set) < max_comments/2:
-            print("### THROTTLING DETECTED | Restarting scraping in 60 minutes ###")
+            print("### THROTTLING DETECTED | Restarting scraping in 90 minutes ###")
             driver.quit()
             connection.rollback()
-            time.sleep(3600)
+            time.sleep(5400)
             return False
 
         connection.commit()
@@ -443,23 +443,17 @@ def scrape_posts_by_link_list(posts_result):
 
         if "/posts/" not in link:
             continue
-
-        successful_scrape = False
-
-        while not successful_scrape:
-            try:
-                driver.get(link)
-            except Exception:
-                driver = setup_driver()
-                driver.maximize_window()
-                action = webdriver.ActionChains(driver)
-                driver.get(link)
-                print("Driver set up")
-            finally:
-                successful_scrape = scrape_post(link, driver, action)
-
-                if successful_scrape is False:
-                    print(f"Retrying current link due to scrape failure.")
+       
+        try:
+            driver.get(link)
+        except Exception:
+            driver = setup_driver()
+            driver.maximize_window()
+            action = webdriver.ActionChains(driver)
+            driver.get(link)
+            print("Driver set up")
+        finally:
+            scrape_post(link, driver, action)
 
     driver.quit()
 
