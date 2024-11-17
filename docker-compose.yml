@@ -68,7 +68,7 @@ services:
       - CANDIDATE=KamalaHarris
       - FIRST_DELAY=0
       - SECOND_DELAY=5
-      - MAX_COMMENTS=80
+      - MAX_COMMENTS=100
     command: sh -c "sleep 300s ; python3 -u analyzer.py"
     depends_on:
       - mysql
@@ -85,7 +85,7 @@ services:
       - CANDIDATE=KamalaHarris
       - FIRST_DELAY=10
       - SECOND_DELAY=15
-      - MAX_COMMENTS=80
+      - MAX_COMMENTS=100
     command: sh -c "sleep 300s ; python3 -u analyzer.py"
     depends_on:
       - mysql
@@ -102,7 +102,7 @@ services:
       - CANDIDATE=DonaldTrump
       - FIRST_DELAY=0
       - SECOND_DELAY=5
-      - MAX_COMMENTS=80
+      - MAX_COMMENTS=100
     command: sh -c "sleep 600s ; python3 -u analyzer.py"
     depends_on:
       - mysql
@@ -119,7 +119,7 @@ services:
       - CANDIDATE=DonaldTrump
       - FIRST_DELAY=10
       - SECOND_DELAY=15
-      - MAX_COMMENTS=80
+      - MAX_COMMENTS=100
     command: sh -c "sleep 600s ; python3 -u analyzer.py"
     depends_on:
       - mysql

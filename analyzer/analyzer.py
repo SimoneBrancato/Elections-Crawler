@@ -1,7 +1,5 @@
-import json
 from selenium import webdriver
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -16,7 +14,6 @@ import requests
 from PIL import Image
 from io import BytesIO
 import pytesseract
-import pandas as pd
 import time
 import os
 
@@ -62,7 +59,6 @@ def handle_login(driver: WebDriver):
 
         time.sleep(3)
 
-        
         xpath_submit_button = "//div[@class='x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n x1ypdohk xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3']"
         submit_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, xpath_submit_button)))
         submit_button.click()
@@ -94,7 +90,6 @@ print("Connected to the database!")
 cursor = connection.cursor() # To execute SQL queries
 
 def scroll_down(driver, element):
-    
     initial_position = driver.execute_script("return arguments[0].scrollTop;", element)
     
     driver.execute_script("arguments[0].scrollBy(0, 800);", element)
@@ -108,11 +103,11 @@ def scroll_down(driver, element):
         driver.execute_script("window.scrollBy(0, 800);")
         new_position = driver.execute_script("return window.pageYOffset;")
 
+    time.sleep(15)
+
     # Check if scrolling was still ineffective after the fallback
     if new_position == initial_position:
         return -1  # Return -1 if it continues to not scroll
-
-    time.sleep(20)
 
     return 0
 
@@ -166,49 +161,71 @@ def get_timestamp_from_post(post, driver, action):
 
 # Extracts reactions from a comment
 def get_comment_reactions(comment_div, driver):
-    try:
-        reactions = {}
 
+    reactions = {}
+    
+    try:
         xpath_reactions_button = ".//div[@class='x1i10hfl x1qjc9v5 xjbqb8w xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x3nfvp2 x1q0g3np x87ps6o x1lku1pv x1a2a7pz' and contains(@aria-label, 'reactions')]"
         reactions_button = comment_div.find_element(By.XPATH, xpath_reactions_button)
         reactions_button.click()
 
-        time.sleep(2) 
-
-        xpath_reactions_popup = "//div[@class='x1n2onr6 x1ja2u2z x1afcbsf xdt5ytf x1a2a7pz x71s49j x1qjc9v5 xrjkcco x58fqnu x1mh14rs xfkwgsy x78zum5 x1plvlek xryxfnj xcatxm7 x1n7qst7 xh8yej3']"
-        reactions_popup = driver.find_element(By.XPATH, xpath_reactions_popup)
-
-        xpath_reaction_panels = ".//div[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg x1vjfegm x3nfvp2 xrbpyxo x1itg65n x16dsc37']"
-        reaction_panels = reactions_popup.find_elements(By.XPATH, xpath_reaction_panels)
+        time.sleep(5)
+        
+        xpath_reaction_panels = "//div[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg x1vjfegm x3nfvp2 xrbpyxo x1itg65n x16dsc37' and @aria-hidden='false']"
+        reaction_panels = driver.find_elements(By.XPATH, xpath_reaction_panels)
 
         for panel in reaction_panels:
-            reaction_str = panel.get_attribute("aria-label")
-            reaction_type, reaction_count = reaction_str.replace(" ","").lower().split(',')
+            reaction_type = panel.get_attribute("aria-label").split()[-1].lower()
 
             if reaction_type == "all":
                 continue
+            
+            time.sleep(5)
+
+            xpath_reaction_count = ".//span[@class='x193iq5w xeuugli x13faqbe x1vvkbs x1xmvt09 x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xudqn12 x3x7a5m x6prxxf xvq8zen x1s688f xi81zsa']"
+            reaction_count = panel.find_element(By.XPATH, xpath_reaction_count).text
 
             reactions[reaction_type] = convert_reaction_count(reaction_count)
 
-        xpath_close_reactions_button = ".//div[@class='x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xzolkzo x12go9s9 x1rnf11y xprq8jg x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x78zum5 xl56j7k xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xc9qbxq x14qfxbe x1qhmfi1']"
-        close_reactions_button = reactions_popup.find_element(By.XPATH, xpath_close_reactions_button)
-        close_reactions_button.click()  
-        time.sleep(2)
-        return reactions
-    
-    except Exception:
-    
-        reactions = {
-            "like": 0,
-            "love": 0,
-            "care": 0,
-            "haha": 0,
-            "wow": 0,
-            "angry": 0,
-            "sad": 0
-        }
+        try:
+            xpath_more_reactions_button = "//*[@class='html-div xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x6s0dn4 x78zum5 x2lah0s x1qughib x879a55 x1n2onr6']//div[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk x78zum5 xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg x1vjfegm x1itg65n x17qophe x10l6tqk x13vifvy']"
+            more_reactions_button = driver.find_element(By.XPATH, xpath_more_reactions_button)
+            more_reactions_button.click()
 
+            xpath_more_reactions_popup = "//*[@class='xb57i2i x1q594ok x5lxg6s x6ikm8r x1ja2u2z x1pq812k x1rohswg xfk6m8 x1yqm8si xjx87ck xx8ngbg xwo3gff x1n2onr6 x1oyok0e x1odjw0f x1e4zzel x9f619 x78zum5 xdt5ytf x1ten1a2 xz7cn9q xkhd6sd x4uap5 x2xt60n xh8yej3 x1kb659o']"
+            more_reactions_popup = driver.find_element(By.XPATH, xpath_more_reactions_popup)
+            xpath_more_reactions_panels = ".//div[@class='x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n xe8uvvx x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xjyslct x9f619 x1ypdohk x78zum5 x1q0g3np x2lah0s x1i6fsjq xfvfia3 xnqzcj9 x1gh759c x1n2onr6 x16tdsg8 x1ja2u2z x1y1aw1k xwib8y2 x1q8cg2c xnjli0']"
+            more_reactions_panels = more_reactions_popup.find_elements(By.XPATH, xpath_more_reactions_panels)
+
+            for panel in more_reactions_panels:
+                reaction_type = panel.get_attribute("aria-label").split()[-1].lower()
+
+                if reaction_type == "all":
+                    continue
+
+                xpath_reaction_count = ".//span[@class='x193iq5w xeuugli x13faqbe x1vvkbs x1xmvt09 x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xudqn12 x3x7a5m x6prxxf xvq8zen xk50ysn xzsf02u x1yc453h']"
+                reaction_count = panel.find_element(By.XPATH, xpath_reaction_count).text
+
+                reactions[reaction_type] = convert_reaction_count(reaction_count)
+
+        except Exception:
+            pass
+        
+        close_reactions_popup(driver)
+
+    except Exception: 
+        close_reactions_popup(driver)
+
+    finally:        
         return reactions
+
+def close_reactions_popup(driver):
+    try:
+        xpath_close_reactions_button = "//div[@class='x1n2onr6 x1ja2u2z x1afcbsf xdt5ytf x1a2a7pz x71s49j x1qjc9v5 xrjkcco x58fqnu x1mh14rs xfkwgsy x78zum5 x1plvlek xryxfnj xcatxm7 x1n7qst7 xh8yej3']//div[@class='x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xzolkzo x12go9s9 x1rnf11y xprq8jg x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x78zum5 xl56j7k xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xc9qbxq x14qfxbe x1qhmfi1']"
+        close_reactions_button = driver.find_element(By.XPATH, xpath_close_reactions_button)
+        close_reactions_button.click()
+    except Exception:
+        pass
     
 # Extracts comment id from comment
 def extract_comment_id(comment):
@@ -253,8 +270,9 @@ def get_comments_from_post(post, post_id, driver, action, max_comments) -> bool:
             scroll_check = scroll_down(driver, post)
 
             if scroll_check == -1:
+                close_reactions_popup(driver)
                 errors_count += 1
-            
+
             xpath_comments = ".//div[@class='x1n2onr6 x1swvt13 x1iorvi4 x78zum5 x1q0g3np x1a2a7pz']"
             new_comments = post.find_elements(By.XPATH, xpath_comments)
 
@@ -321,47 +339,69 @@ def get_comments_from_post(post, post_id, driver, action, max_comments) -> bool:
 
 # Extracts reactions from post
 def get_post_reactions(post_div, driver):
+    reactions = {}
+
     try:
-        reactions = {}
         xpath_reactions_button = ".//div[@class='x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1ypdohk xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x1n2onr6 x87ps6o x1lku1pv x1a2a7pz x1heor9g xnl1qt8 x6ikm8r x10wlt62 x1vjfegm x1lliihq']"
         reactions_button = post_div.find_element(By.XPATH, xpath_reactions_button)
         reactions_button.click()
 
         time.sleep(5)
         
-        xpath_reaction_panels = ".//div[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg x1vjfegm x3nfvp2 xrbpyxo x1itg65n x16dsc37']"
+        xpath_reaction_panels = "//*[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg x1vjfegm x3nfvp2 xrbpyxo x1itg65n x16dsc37' and @aria-hidden='false']"
         reaction_panels = driver.find_elements(By.XPATH, xpath_reaction_panels)
-        
+
         for panel in reaction_panels:
-            reaction_str = panel.get_attribute("aria-label")
-            reaction_type, reaction_count = reaction_str.replace(" ","").lower().split(',')
+            reaction_type = panel.get_attribute("aria-label").split()[-1].lower()
 
             if reaction_type == "all":
                 continue
             
+            time.sleep(5)
+
+            xpath_reaction_count = ".//span[@class='x193iq5w xeuugli x13faqbe x1vvkbs x1xmvt09 x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xudqn12 x3x7a5m x6prxxf xvq8zen x1s688f xi81zsa']"
+            reaction_count = panel.find_element(By.XPATH, xpath_reaction_count).text
+            
             reactions[reaction_type] = convert_reaction_count(reaction_count)
+
+        try:
+            xpath_more_reactions_button = "//*[@class='html-div xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x6s0dn4 x78zum5 x2lah0s x1qughib x879a55 x1n2onr6']//div[@class='x1i10hfl xe8uvvx xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz xjyslct xjbqb8w x18o3ruo x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1heor9g x1ypdohk x78zum5 xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg x1vjfegm x1itg65n x17qophe x10l6tqk x13vifvy']"
+            more_reactions_button = driver.find_element(By.XPATH, xpath_more_reactions_button)
+            more_reactions_button.click()
+
+            xpath_more_reactions_popup = "//*[@class='xb57i2i x1q594ok x5lxg6s x6ikm8r x1ja2u2z x1pq812k x1rohswg xfk6m8 x1yqm8si xjx87ck xx8ngbg xwo3gff x1n2onr6 x1oyok0e x1odjw0f x1e4zzel x9f619 x78zum5 xdt5ytf x1ten1a2 xz7cn9q xkhd6sd x4uap5 x2xt60n xh8yej3 x1kb659o']"
+            more_reactions_popup = driver.find_element(By.XPATH, xpath_more_reactions_popup)
+            xpath_more_reactions_panels = ".//div[@class='x1i10hfl xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x972fbf xcfux6l x1qhh985 xm0m39n xe8uvvx x1hl2dhg xggy1nq x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xjyslct x9f619 x1ypdohk x78zum5 x1q0g3np x2lah0s x1i6fsjq xfvfia3 xnqzcj9 x1gh759c x1n2onr6 x16tdsg8 x1ja2u2z x1y1aw1k xwib8y2 x1q8cg2c xnjli0']"
+            more_reactions_panels = more_reactions_popup.find_elements(By.XPATH, xpath_more_reactions_panels)
+
+            for panel in more_reactions_panels:
+                
+                reaction_type = panel.get_attribute("aria-label").split()[-1].lower()
+
+                if reaction_type == "all":
+                    continue
+        
+                xpath_reaction_count = ".//span[@class='x193iq5w xeuugli x13faqbe x1vvkbs x1xmvt09 x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xudqn12 x3x7a5m x6prxxf xvq8zen xk50ysn xzsf02u x1yc453h']"
+                reaction_count = panel.find_element(By.XPATH, xpath_reaction_count).text
+                
+                reactions[reaction_type] = convert_reaction_count(reaction_count)
+
+        except Exception:
+            pass
 
         xpath_close_reactions_button = "//div[@class='x1n2onr6 x1ja2u2z x1afcbsf xdt5ytf x1a2a7pz x71s49j x1qjc9v5 xrjkcco x58fqnu x1mh14rs xfkwgsy x78zum5 x1plvlek xryxfnj xcatxm7 x1n7qst7 xh8yej3']//div[@class='x1i10hfl xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x87ps6o x1lku1pv x1a2a7pz x6s0dn4 xzolkzo x12go9s9 x1rnf11y xprq8jg x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x78zum5 xl56j7k xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 xc9qbxq x14qfxbe x1qhmfi1']"
         close_reactions_button = driver.find_element(By.XPATH, xpath_close_reactions_button)
         close_reactions_button.click()
-        time.sleep(5)
-        return reactions
     
     except Exception:
-        reactions = {
-            "like": 0,
-            "love": 0,
-            "care": 0,
-            "haha": 0,
-            "wow": 0,
-            "angry": 0,
-            "sad": 0
-        }
+        pass
 
+    finally:
         return reactions
 
 # Convert reaction count from string format to integer
 def convert_reaction_count(reaction_count):
+    reaction_count = reaction_count.lower()
     if 'k' in reaction_count: 
         return int(float(reaction_count.replace('k', '')) * 1000)
     elif 'm' in reaction_count:  
@@ -496,8 +536,3 @@ SECOND_DELAY: int = int(os.getenv('SECOND_DELAY'))
 
 scrape_posts_by_days(FIRST_DELAY)
 scrape_posts_by_days(SECOND_DELAY)
-
-
-
-
-
