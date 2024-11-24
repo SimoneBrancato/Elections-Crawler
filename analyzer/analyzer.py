@@ -44,12 +44,11 @@ LOGGER.setLevel(logging.ERROR)
 
 # Targets email and password forms, fills them with email and password, targets submit button and clicks it
 def handle_login(driver: WebDriver):
-    try:
-        
-        xpath_email_form = "//input[@name='email' and @class='x1i10hfl xggy1nq x1s07b3s x1kdt53j x1a2a7pz xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x9f619 xzsf02u x1uxerd5 x1fcty0u x132q4wb x1a8lsjc x1pi30zi x1swvt13 x9desvi xh8yej3 x15h3p50 x10emqs4']"
+    try:                
+        xpath_email_form = "//input[@name='email' and @class='x1i10hfl xggy1nq x1s07b3s x1kdt53j x1a2a7pz xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x9f619 xzsf02u x1uxerd5 x1fcty0u x132q4wb x1a8lsjc x1pi30zi x1swvt13 x9desvi xh8yej3']"
         email = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath_email_form)))
-
-        xpath_pass_form = "//input[@name='pass' and @class='x1i10hfl xggy1nq x1s07b3s x1kdt53j x1a2a7pz xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x9f619 xzsf02u x1uxerd5 x1fcty0u x132q4wb x1a8lsjc x1pi30zi x1swvt13 x9desvi xh8yej3 x15h3p50 x10emqs4']"
+                                                            
+        xpath_pass_form = "//input[@name='pass' and @class='x1i10hfl xggy1nq x1s07b3s x1kdt53j x1a2a7pz xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x9f619 xzsf02u x1uxerd5 x1fcty0u x132q4wb x1a8lsjc x1pi30zi x1swvt13 x9desvi xh8yej3']"
         password = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath_pass_form)))
         
         email.clear()
@@ -150,7 +149,7 @@ def get_timestamp_from_post(post, driver, action):
         extracted_timestamp = post.find_element(By.XPATH, xpath_timestamp)
         action.move_to_element(extracted_timestamp).perform()
         time.sleep(5)
-                              
+              
         xpath_timestamp_tooltip = "//div[@class='xj5tmjb x1r9drvm x16aqbuh x9rzwcf xjkqk3g x972fbf xcfux6l x1qhh985 xm0m39n xms15q0 x1lliihq xo8ld3r x86nfjv xz9dl7a xsag5q8 x1ye3gou xn6708d x1n2onr6 x19991ni __fb-dark-mode  x1hc1fzr xhb22t3 xls3em1']"
         timestamp_str = driver.find_element(By.XPATH, xpath_timestamp_tooltip).get_attribute('innerText')
 
@@ -483,7 +482,7 @@ def scrape_posts_by_link_list(posts_result):
 
         if "/posts/" not in link:
             continue
-       
+        
         try:
             driver.get(link)
         except Exception:
