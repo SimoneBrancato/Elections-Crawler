@@ -62,8 +62,7 @@ def handle_login(driver: WebDriver):
         submit_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, xpath_submit_button)))
         submit_button.click()
         print("Login completed successfully.")
-    except Exception as e:
-        print(e)
+    except Exception:
         pass
     
 
@@ -74,8 +73,7 @@ def handle_cookie(driver):
         accept_cookies_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH , xpath_accept_cookies)))
         accept_cookies_button.click()
         print("Allowed all cookies.")
-    except Exception as e:
-        print(e)
+    except Exception:
         pass
 
 # Establish connection with Elections database
@@ -140,8 +138,7 @@ def get_text_from_post(post):
         image_text = extract_image_text_from_post(post)
         text = f"{caption} {image_text}" if caption and image_text else caption or image_text
         return text
-    except Exception as e:
-        print(e)
+    except Exception:
         return None
 
 # Ectracts timestamp from post
@@ -158,8 +155,7 @@ def get_timestamp_from_post(post, driver, action):
 
         timestamp = datetime.strptime(timestamp_str, "%A, %B %d, %Y at %I:%M %p")
         return timestamp
-    except Exception as e:
-        print(e)
+    except Exception:
         return None
 
 # Extracts reactions from a comment
@@ -254,8 +250,7 @@ def get_timestamp_from_comment(comment, action):
         
         timestamp = datetime.strptime(timestamp_str, "%A, %B %d, %Y at %I:%M %p")
         return timestamp
-    except Exception as e:
-        print(e)
+    except Exception:
         return None
 
 # Extract comments from post
@@ -397,8 +392,7 @@ def get_post_reactions(post_div, driver):
         close_reactions_button = driver.find_element(By.XPATH, xpath_close_reactions_button)
         close_reactions_button.click()
     
-    except Exception as e:
-        print(e)
+    except Exception:
         pass
 
     finally:
@@ -474,8 +468,7 @@ def scrape_post(url, driver, action) -> bool:
         is_successful = get_comments_from_post(post_popup, post_id, driver, action, max_comments=MAX_COMMENTS)
         return is_successful
     
-    except Exception as e:
-        print(e)
+    except Exception:
         return
 
 # Scrapes all posts from a given link list
@@ -485,9 +478,12 @@ def scrape_posts_by_link_list(posts_result):
     driver.maximize_window()
     action = webdriver.ActionChains(driver)
 
+    print("Retrieved " + str(len(post_links)) + " posts.")
+
     for link in post_links:
 
         if "/posts/" not in link:
+            print("Found invalid post link. Skipping current link.")
             continue
         
         try:
