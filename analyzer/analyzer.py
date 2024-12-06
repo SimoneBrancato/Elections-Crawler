@@ -297,7 +297,7 @@ def get_comments_from_post(post, post_id, driver, action, max_comments) -> bool:
                     if len(comment_text) > 1000:
                         comment_text = comment_text[:999]
 
-                    reactions = get_comment_reactions(new_comment, driver)
+                    reactions = get_comment_reactions(new_comment, driver) 
 
                     sql_insert_comment = """
                                     INSERT IGNORE 
@@ -423,11 +423,11 @@ def scrape_post(url, driver, action) -> bool:
         time.sleep(15)
 
         try:
-            xpath_post_div = "//div[@class='x1n2onr6 x1ja2u2z x1jx94hy x1qpq9i9 xdney7k xu5ydu1 xt3gfkd x9f619 xh8yej3 x6ikm8r x10wlt62 xquyuld']"
-            post_popup = driver.find_element(By.XPATH, xpath_post_div)
-        except Exception:
             xpath_post_popup = "//div[@class='xb57i2i x1q594ok x5lxg6s x78zum5 xdt5ytf x6ikm8r x1ja2u2z x1pq812k x1rohswg xfk6m8 x1yqm8si xjx87ck xx8ngbg xwo3gff x1n2onr6 x1oyok0e x1odjw0f x1iyjqo2 xy5w88m']"
             post_popup = driver.find_element(By.XPATH, xpath_post_popup)
+        except Exception:
+            xpath_post_div = "//div[@class='x1n2onr6 x1ja2u2z x1jx94hy x1qpq9i9 xdney7k xu5ydu1 xt3gfkd x9f619 xh8yej3 x6ikm8r x10wlt62 xquyuld']"
+            post_popup = driver.find_element(By.XPATH, xpath_post_div)
 
         post_id = extract_post_id(url)
 
