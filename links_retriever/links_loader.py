@@ -101,8 +101,8 @@ def get_timestamp_from_post(post):
         extracted_timestamp = post.find_element(By.XPATH, xpath_timestamp)
         action.move_to_element(extracted_timestamp).perform()
         time.sleep(5)
-                              
-        xpath_timestamp_tooltip = "//div[@class='xj5tmjb x1r9drvm x16aqbuh x9rzwcf xjkqk3g x972fbf xcfux6l x1qhh985 xm0m39n xms15q0 x1lliihq xo8ld3r x86nfjv xz9dl7a xsag5q8 x1ye3gou xn6708d x1n2onr6 x19991ni __fb-dark-mode  x1hc1fzr xhb22t3 xls3em1']"
+                                                 
+        xpath_timestamp_tooltip = "//div[@class='xj5tmjb x1r9drvm x16aqbuh x9rzwcf xjkqk3g x972fbf xcfux6l x1qhh985 xm0m39n xms15q0 x78zum5 xo8ld3r x86nfjv xz9dl7a xsag5q8 x1ye3gou xn6708d x1n2onr6 x19991ni __fb-dark-mode  x1hc1fzr xhb22t3 xls3em1']"
         timestamp_str = driver.find_element(By.XPATH, xpath_timestamp_tooltip).get_attribute('innerText')
 
         timestamp = datetime.strptime(timestamp_str, "%A, %B %d, %Y at %I:%M %p")
