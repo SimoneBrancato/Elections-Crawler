@@ -8,10 +8,15 @@ The collected data is then fed into a larger Spark-based processing architecture
 All collected data is stored in a relational database including a historical indexing mechanism that allows for multiple scraping iterations of the same content to overcome the temporal limitations imposed by the platform. 
 This feature is designed to track the evolution of user interactions over time.
 
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/3a5cbc1c-68bc-4eed-afec-4ba10484c801" alt="ChatGPT Image" width="400"/>
+</div>
+
+
 ## Prerequisites
 
 - **Docker/Docker Compose:** Ensure you have a fully functional [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installation on your local computer.
-- **Environment Variable:** Create a `.env` file in the main directory with structure:
+- **Environment Variables:** Create a `.env` file in the main directory with structure:
 ```env
 FB_EMAIL_RETRIEVER=<your-email>
 FB_PASSWORD_RETRIEVER=<your-password>
@@ -40,7 +45,9 @@ For each post, the number of retrieved comments is limited to avoid platform blo
 All containers are launched once per day by restarting containers, which allow the project to run as a daemon. Once collected, the data can be exported and analyzed within dedicated data pipelines.
 
 
-![FlowchartElectionsCrawler](https://github.com/user-attachments/assets/37a873d2-e347-4b6a-a680-37b59cc23878)
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/37a873d2-e347-4b6a-a680-37b59cc23878" alt="FC"/>
+</div>
 
 
 ## Contacts
