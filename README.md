@@ -1,3 +1,8 @@
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/3a5cbc1c-68bc-4eed-afec-4ba10484c801" alt="ChatGPT Image" width="400"/>
+</div>
+
+
 ## What is Elections-Crawler?
 Elections-Crawler is a web crawling system developed as part of the broader thesis project Sentivoter – A Framework for Cross-Media Data Collection and Processing Applied to the U.S. Elections.
 The crawler is specifically designed to automatically collect data from the official Facebook pages of Kamala Harris and Donald Trump.
@@ -7,11 +12,6 @@ The collected data is then fed into a larger Spark-based processing architecture
 
 All collected data is stored in a relational database including a historical indexing mechanism that allows for multiple scraping iterations of the same content to overcome the temporal limitations imposed by the platform. 
 This feature is designed to track the evolution of user interactions over time.
-
-
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/3a5cbc1c-68bc-4eed-afec-4ba10484c801" alt="ChatGPT Image" width="400"/>
-</div>
 
 
 ## Prerequisites
