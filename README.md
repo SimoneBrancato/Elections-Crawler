@@ -48,8 +48,10 @@ All containers are launched once per day by restarting containers, which allow t
 
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/37a873d2-e347-4b6a-a680-37b59cc23878" alt="FC"/>
+  <img src="https://github.com/user-attachments/assets/9c7d976f-b5e7-4669-b1c4-dd4d70518a42" alt="FC"/>
 </div>
+
+
 
 
 
