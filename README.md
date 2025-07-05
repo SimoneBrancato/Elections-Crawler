@@ -1,6 +1,5 @@
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/3a5cbc1c-68bc-4eed-afec-4ba10484c801" alt="ChatGPT Image" width="400"/>
-</div>
+## Related Repository (!!!)
+This project is a key component of a larger data analysis framework. It focuses on collecting and organizing Facebook data, and is used by the main analytics pipeline in [Sentivoter](https://github.com/SimoneBrancato/Sentivoter).
 
 
 ## What is Elections-Crawler?
@@ -13,6 +12,9 @@ The collected data is then fed into a larger Spark-based processing architecture
 All collected data is stored in a relational database including a historical indexing mechanism that allows for multiple scraping iterations of the same content to overcome the temporal limitations imposed by the platform. 
 This feature is designed to track the evolution of user interactions over time.
 
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/3a5cbc1c-68bc-4eed-afec-4ba10484c801" alt="ChatGPT Image" width="400"/>
+</div>
 
 ## Prerequisites
 
